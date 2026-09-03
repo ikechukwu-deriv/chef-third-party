@@ -182,6 +182,8 @@ module DockerCookbook
         package 'docker-ce-cli' do
           version version
           options new_resource.package_options
+          retries 6
+          retry_delay 15
           action :install
         end
       end
@@ -189,6 +191,8 @@ module DockerCookbook
       package new_resource.package_name do
         version version
         options new_resource.package_options
+        retries 6
+        retry_delay 15
         action :install
       end
     end
