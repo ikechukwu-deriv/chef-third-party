@@ -50,6 +50,11 @@ module DockerCookbook
       false
     end
 
+    def trixie?
+      return true if platform?('debian') && node['platform_version'].to_i == 13
+      false
+    end
+
     def bionic?
       return true if platform?('ubuntu') && node['platform_version'] == '18.04'
       false
@@ -69,6 +74,8 @@ module DockerCookbook
                    'buster'
                  elsif bullseye? # deb 11
                    'bullseye'
+                 elsif trixie? # deb 13
+                   'trixie'
                  elsif bionic? # ubuntu 18.04
                    'bionic'
                  elsif focal? # ubuntu 20.04
@@ -129,11 +136,27 @@ module DockerCookbook
 
           package 'apt-transport-https'
 
+          # Debian 13 (trixie) and modern apt no longer ship `apt-key`.
+          # Install the Docker GPG key into a dedicated keyring and reference
+          # it via the `signed-by` option instead of the deprecated apt-key flow.
+          directory '/etc/apt/keyrings' do
+            mode '0755'
+            recursive true
+          end
+
+          docker_apt_keyring = '/etc/apt/keyrings/docker.asc'
+
+          remote_file docker_apt_keyring do
+            source "https://download.docker.com/linux/#{node['platform']}/gpg"
+            mode '0644'
+          end
+
           apt_repository 'Docker' do
             components Array(new_resource.repo_channel)
             uri "https://download.docker.com/linux/#{node['platform']}"
             arch deb_arch
-            key "https://download.docker.com/linux/#{node['platform']}/gpg"
+            key false
+            options "signed-by=#{docker_apt_keyring}"
             action :add
           end
         else
