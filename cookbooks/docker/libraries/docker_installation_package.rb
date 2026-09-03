@@ -68,6 +68,14 @@ module DockerCookbook
     # https://github.com/chef/chef/issues/4103
     def version_string(v)
       return if v.nil?
+
+      # If the caller already provides a fully-qualified Docker package version
+      # (e.g. "5:28.5.2-1~debian.13~trixie"), use it verbatim. The heuristics
+      # below only know how to build the legacy "~ce~3-0~debian-<codename>"
+      # style strings, which no longer match the packages published for newer
+      # Debian releases such as trixie.
+      return v if v =~ /~debian\.\d+~|~ubuntu\.\d+~|~ce/ || v.include?(':')
+
       codename = if stretch? # deb 9
                    'stretch'
                  elsif buster? # deb 10
