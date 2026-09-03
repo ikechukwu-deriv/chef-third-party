@@ -173,6 +173,19 @@ module DockerCookbook
 
       version = new_resource.package_version || version_string(new_resource.version)
 
+      # On Debian/Ubuntu, explicitly install the CLI (and containerd) in addition
+      # to the docker-ce (daemon) package. Relying solely on docker-ce's
+      # dependency resolution can leave /usr/bin/docker (docker-ce-cli) missing
+      # when apt pin priorities force specific versions, which produces a golden
+      # image whose `docker` command is absent even though the daemon converged.
+      if debuntu?
+        package 'docker-ce-cli' do
+          version version
+          options new_resource.package_options
+          action :install
+        end
+      end
+
       package new_resource.package_name do
         version version
         options new_resource.package_options
