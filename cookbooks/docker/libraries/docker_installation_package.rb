@@ -155,7 +155,6 @@ module DockerCookbook
             components Array(new_resource.repo_channel)
             uri "https://download.docker.com/linux/#{node['platform']}"
             arch deb_arch
-            key false
             options "signed-by=#{docker_apt_keyring}"
             action :add
           end
